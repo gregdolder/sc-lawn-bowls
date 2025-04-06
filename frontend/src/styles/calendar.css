@@ -1,0 +1,128 @@
+/* Basic Calendar Styles */
+.calendar-container {
+  font-family: inherit;
+  margin: 0 auto;
+  position: relative;
+  width: 100%;
+  overflow: hidden; /* Prevent overflow */
+  border-radius: 0.5rem;
+}
+
+/* FullCalendar core style overrides */
+.fc {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  max-height: 800px; /* Set max height */
+  min-height: 600px; /* Set min height */
+}
+
+.fc-view-harness {
+  flex-grow: 1;
+  min-height: 400px;
+  overflow: hidden !important; /* Prevent overflow */
+}
+
+.fc-scroller {
+  height: auto !important;
+  overflow: visible !important; /* Fix scrolling */
+}
+
+.fc-scroller-liquid-absolute {
+  position: relative !important;
+  overflow: visible !important;
+  height: auto !important;
+}
+
+/* Fix the table layout */
+.fc-scrollgrid {
+  border-collapse: collapse !important;
+  width: 100% !important;
+  border: none !important;
+}
+
+.fc-scrollgrid-section-body,
+.fc-scrollgrid-section-header {
+  width: 100% !important;
+}
+
+.fc-daygrid-body {
+  width: 100% !important;
+}
+
+.fc-daygrid-body table {
+  width: 100% !important;
+}
+
+/* FullCalendar overrides */
+.fc .fc-toolbar {
+  margin-bottom: 1.5em !important;
+}
+
+.fc .fc-toolbar-title {
+  font-size: 1.5rem !important;
+  font-weight: 600 !important;
+  color: #1a202c !important;
+}
+
+.fc .fc-button-primary {
+  background-color: #0066CC !important;
+  border-color: #0052a3 !important;
+}
+
+.fc .fc-button-primary:hover {
+  background-color: #004c99 !important;
+  border-color: #00407e !important;
+}
+
+.fc .fc-button-primary.fc-button-active,
+.fc .fc-button-primary:active {
+  background-color: #004080 !important;
+  border-color: #003366 !important;
+}
+
+.fc .fc-daygrid-day.fc-day-today {
+  background-color: rgba(0, 102, 204, 0.1) !important;
+}
+
+.fc .fc-event {
+  border-radius: 4px !important;
+  padding: 2px 4px !important;
+  cursor: pointer !important;
+  margin: 1px 0 !important;
+}
+
+/* Event type colors are set inline in the component */
+
+/* Legend styles */
+.event-legend {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+}
+
+.legend-color {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .fc .fc-toolbar {
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+  
+  .fc .fc-toolbar-title {
+    font-size: 1.25rem !important;
+  }
+} 

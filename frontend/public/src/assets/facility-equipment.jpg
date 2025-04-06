@@ -1,0 +1,12 @@
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="600" fill="#0B6E4F" opacity="0.2" />
+  <!-- Bowls -->
+  <circle cx="300" cy="300" r="70" fill="#0B6E4F" opacity="0.6" />
+  <circle cx="450" cy="350" r="70" fill="#0B6E4F" opacity="0.4" />
+  <circle cx="550" cy="250" r="70" fill="#0B6E4F" opacity="0.5" />
+  <!-- Jack -->
+  <circle cx="200" cy="200" r="30" fill="#F0BB62" />
+  <text x="400" y="500" font-family="Arial" font-size="32" text-anchor="middle" fill="#0B6E4F">
+    Equipment
+  </text>
+</svg> 

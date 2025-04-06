@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Outer circle -->
+  <circle cx="50" cy="50" r="48" fill="#0B6E4F" stroke="#073B3A" stroke-width="2" />
+  
+  <!-- Bias line representing the bias of a lawn bowl -->
+  <path d="M50 10 C 30 30, 30 70, 50 90" stroke="#F0BB62" stroke-width="5" fill="none" stroke-linecap="round" />
+  
+  <!-- Small circles representing the markings on a lawn bowl -->
+  <circle cx="35" cy="35" r="4" fill="#F0BB62" />
+  <circle cx="65" cy="65" r="4" fill="#F0BB62" />
+</svg> 
