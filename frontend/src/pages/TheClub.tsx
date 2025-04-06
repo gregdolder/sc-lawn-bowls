@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getRecentGalleryPhotos, urlFor, testSanityConnection, getGalleryAlbumsWithPhotos } from '../lib/sanity';
+import { urlFor, testSanityConnection, getGalleryAlbumsWithPhotos } from '../lib/sanity';
 import { createPortal } from 'react-dom';
 
 // Define the type for our gallery photos and albums to match the Sanity types

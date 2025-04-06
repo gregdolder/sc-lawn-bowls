@@ -24,15 +24,6 @@ const GameGlossary: React.FC = () => {
     }
   };
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.2 }
-    }
-  };
-
   // State for active letter filter
   const [activeLetter, setActiveLetter] = useState<string>('All');
   // Track previous letter for transition effects
@@ -385,17 +376,15 @@ const GameGlossary: React.FC = () => {
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
             variants={containerVariants}
             initial="hidden"
-            animate={controls}
-            key={`glossary-container-${activeLetter}`} // Force re-render on filter change
+            animate="visible"
           >
-            {filteredTerms.map((item, index) => (
+            {filteredTerms.map((item) => (
               <motion.div
-                key={`${item.term}-${activeLetter}`} // Include activeLetter in key to force re-render
-                variants={itemVariants}
-                className="bg-background-light p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow"
+                key={item.term}
+                className="bg-white p-6 rounded-lg shadow-md"
               >
                 <h3 className="text-xl font-bold text-primary mb-2">{item.term}</h3>
-                <p className="text-gray-700">{item.definition}</p>
+                <p className="text-gray-600">{item.definition}</p>
               </motion.div>
             ))}
           </motion.div>
