@@ -23,7 +23,6 @@ const Events: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
-  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [currentMonth, setCurrentMonth] = useState(new Date());
   
   // Animation controls
@@ -32,26 +31,6 @@ const Events: React.FC = () => {
   useEffect(() => {
     controls.start('visible');
   }, [controls]);
-
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 15 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.4 }
-    }
-  };
 
   // Filter events
   const filteredEvents = events.filter(event => {
@@ -80,15 +59,6 @@ const Events: React.FC = () => {
       return false;
     }
   });
-
-  const pastEvents = filteredEvents.filter(event => {
-    try {
-      return parseDate(event.startDate) < currentDate;
-    } catch (error) {
-      console.error('Error comparing dates for event:', event._id, error);
-      return true; // Show in past events if there's an error
-    }
-  }).slice(0, 5); // Only show 5 most recent past events
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -167,29 +137,6 @@ const Events: React.FC = () => {
     } catch (error) {
       console.error('Error formatting date:', error, dateString);
       return dateString || 'Date not available';
-    }
-  };
-
-  // Simplified date for calendar view
-  const formatCalendarDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      
-      // Check if date is valid
-      if (isNaN(date.getTime())) {
-        console.warn('Invalid calendar date:', dateString);
-        return 'TBD';
-      }
-      
-      const options: Intl.DateTimeFormatOptions = { 
-        month: 'short', 
-        day: 'numeric'
-      };
-      
-      return date.toLocaleDateString(undefined, options);
-    } catch (error) {
-      console.error('Error formatting calendar date:', error, dateString);
-      return 'TBD';
     }
   };
 
@@ -428,115 +375,16 @@ const Events: React.FC = () => {
                     Social Events
                   </button>
                 </div>
-                <div className="flex border rounded-lg overflow-hidden">
-                  <button 
-                    onClick={() => setViewMode('list')}
-                    className={`px-4 py-2 ${viewMode === 'list' ? 'bg-primary text-white' : 'bg-gray-100'}`}
-                  >
-                    <i className="fas fa-list-ul mr-2"></i>Card View
-                  </button>
-                  <button 
-                    onClick={() => setViewMode('calendar')}
-                    className={`px-4 py-2 ${viewMode === 'calendar' ? 'bg-primary text-white' : 'bg-gray-100'}`}
-                  >
-                    <i className="fas fa-calendar-alt mr-2"></i>Calendar View
-                  </button>
-                </div>
               </div>
 
               {/* Upcoming Events */}
               <div className="mb-16">
                 <h3 className="text-2xl font-bold text-primary mb-6">
-                  {viewMode === 'list' ? 'Upcoming Events' : 'Event Calendar'}
+                  Event Calendar
                 </h3>
                 
-                {viewMode === 'list' ? (
-                  upcomingEvents.length === 0 ? (
-                    <p className="text-center py-8 bg-gray-50 rounded-lg">No upcoming events found. Check back soon!</p>
-                  ) : (
-                    <motion.div 
-                      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                      variants={containerVariants}
-                      initial="hidden"
-                      animate={controls}
-                    >
-                      {upcomingEvents.map(event => {
-                        console.log('Rendering event card:', event);
-                        return (
-                        <motion.div 
-                          key={event._id}
-                          variants={itemVariants}
-                          className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
-                        >
-                          <div className="h-48 overflow-hidden relative">
-                            {event.image ? (
-                              <img 
-                                src={urlFor(event.image).width(600).url()}
-                                alt={event.title} 
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <img 
-                                src="/images/warmups.jpg" 
-                                alt="Default event" 
-                                className="w-full h-full object-cover"
-                              />
-                            )}
-                            <div className="absolute top-2 right-2 bg-primary text-white px-3 py-1 rounded-full text-sm">
-                              {event.eventType || 'Event'}
-                            </div>
-                          </div>
-                          <div className="p-4">
-                            <h4 className="text-xl font-bold mb-2">{event.title}</h4>
-                            <p className="text-gray-600 mb-2">
-                              <i className="far fa-calendar-alt mr-2"></i>
-                              {formatDate(event.startDate)}
-                            </p>
-                            <p className="text-gray-600 mb-3">
-                              <i className="fas fa-map-marker-alt mr-2"></i>
-                              {event.location || 'Location TBA'}
-                            </p>
-                            <p className="text-gray-700 mb-4 line-clamp-2">{event.description || 'No description available'}</p>
-                            <Link 
-                              to={`/events/${event.slug?.current || event._id}`}
-                              className="btn btn-primary w-full text-center"
-                            >
-                              View Details
-                            </Link>
-                          </div>
-                        </motion.div>
-                      )})}
-                    </motion.div>
-                  )
-                ) : (
-                  // Monthly calendar view
-                  renderCalendar()
-                )}
+                {renderCalendar()}
               </div>
-
-              {/* Past Events - only show in list view */}
-              {viewMode === 'list' && pastEvents.length > 0 && (
-                <div>
-                  <h3 className="text-2xl font-bold text-primary mb-6">Recent Past Events</h3>
-                  <div className="bg-gray-50 rounded-lg overflow-hidden shadow-sm divide-y">
-                    {pastEvents.map(event => (
-                      <div key={event._id} className="p-4 hover:bg-gray-100 transition-colors">
-                        <div className="flex items-center gap-4">
-                          <div className="text-sm text-gray-500">
-                            {formatDate(event.startDate)}
-                          </div>
-                          <h4 className="text-lg font-semibold">{event.title}</h4>
-                          <div className="ml-auto">
-                            <span className="text-sm px-3 py-1 bg-gray-200 rounded-full">
-                              {event.eventType}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </>
           )}
         </div>
