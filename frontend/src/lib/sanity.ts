@@ -148,35 +148,99 @@ export async function testSanityConnection() {
 // Helper function to fetch albums with their photos
 export async function getGalleryAlbumsWithPhotos(): Promise<SanityGalleryAlbum[]> {
   try {
-    const query = `*[_type == "galleryAlbum"] | order(publishedAt desc) {
+    // First we need to check if we can connect to Sanity
+    const connectionTest = await testSanityConnection();
+    if (!connectionTest.success) {
+      console.error("Cannot fetch gallery albums - Sanity connection failed");
+      return [];
+    }
+    
+    console.log("Fetching gallery albums and photos...");
+
+    // First get all albums
+    const basicAlbumsQuery = `*[_type == "galleryAlbum"] | order(publishedAt desc) {
       _id,
       title,
       description,
       publishedAt,
+      featured,
       "coverImage": coverImage.asset->{
         _id,
         url,
         metadata {
           dimensions
         }
-      },
-      "photos": photos[]->{
+      }
+    }`;
+    
+    // Get basic album data
+    const basicAlbums = await sanityClient.fetch(basicAlbumsQuery);
+    console.log('Basic albums data:', basicAlbums);
+    
+    if (!basicAlbums || basicAlbums.length === 0) {
+      console.warn("No gallery albums returned from Sanity query");
+      return [];
+    }
+    
+    // Inspect one album to understand structure
+    if (basicAlbums.length > 0) {
+      console.log('Sample album inspection:', basicAlbums[0]);
+    }
+    
+    // Get all photos in a separate query
+    const allPhotosQuery = `*[_type == "galleryPhoto"] {
+      _id,
+      title,
+      description,
+      "album": album->{ _id, title },
+      "image": image.asset->{
         _id,
-        title,
-        description,
-        "image": image.asset->{
-          _id,
-          url,
-          metadata {
-            dimensions
-          }
+        url,
+        metadata {
+          dimensions
         }
       }
     }`;
     
-    const albums = await sanityClient.fetch(query);
-    console.log('Sanity albums query result:', albums);
-    return albums;
+    const allPhotos = await sanityClient.fetch(allPhotosQuery);
+    console.log('All photos:', allPhotos);
+    
+    // Now build albums with their photos
+    const processedAlbums = basicAlbums.map((album: any) => {
+      // Find photos for this album
+      const albumPhotos = allPhotos.filter((photo: any) => 
+        photo.album && photo.album._id === album._id
+      );
+      
+      console.log(`Album "${album.title}" has ${albumPhotos.length} matching photos`);
+      
+      // Process cover image URL
+      let coverImageUrl = null;
+      if (album.coverImage && album.coverImage.url) {
+        coverImageUrl = album.coverImage.url;
+      }
+      
+      // Map photos to expected format
+      const mappedPhotos = albumPhotos.map((photo: any) => ({
+        _id: photo._id,
+        title: photo.title,
+        caption: photo.description,
+        image: photo.image,
+        imageUrl: photo.image?.url || null
+      }));
+      
+      return {
+        _id: album._id,
+        title: album.title,
+        description: album.description || '',
+        coverImage: album.coverImage,
+        coverImageUrl: coverImageUrl,
+        photos: mappedPhotos
+      };
+    });
+    
+    console.log('Final processed albums:', processedAlbums);
+    return processedAlbums;
   } catch (error) {
     console.error('Error fetching gallery albums:', error);
     return [];

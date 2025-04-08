@@ -334,6 +334,8 @@ const TheClub: React.FC = () => {
         // First check the connection
         const connected = await checkSanityConnection();
         if (!connected) {
+          console.warn('Connection test failed, falling back to static content');
+          setGalleryAlbums(FALLBACK_ALBUMS);
           setLoading(false);
           return;
         }
@@ -351,12 +353,38 @@ const TheClub: React.FC = () => {
         
         if (albums && albums.length > 0) {
           console.log(`Found ${albums.length} albums to display`);
-          // Ensure each album has a photos array
-          const safeAlbums: GalleryAlbum[] = albums.map(album => ({
-            ...album,
-            photos: album.photos || []
-          }));
-          setGalleryAlbums(safeAlbums);
+          
+          // Process albums to ensure they have the expected structure
+          const processedAlbums = albums.map(album => {
+            // Make sure each album has a photos array
+            const photos = album.photos || [];
+            
+            // Log photo count for debugging
+            console.log(`Album "${album.title}" has ${photos.length} photos`);
+            
+            // Process cover image URL if needed
+            let coverImageUrl = null;
+            if (album.coverImage && album.coverImage.url) {
+              coverImageUrl = album.coverImage.url;
+            }
+            
+            return {
+              _id: album._id,
+              title: album.title,
+              description: album.description || '',
+              coverImage: album.coverImage,
+              coverImageUrl: coverImageUrl,
+              photos: photos.map(photo => ({
+                _id: photo._id,
+                title: photo.title,
+                caption: photo.caption,
+                image: photo.image,
+                imageUrl: photo.image?.url || null
+              }))
+            };
+          });
+          
+          setGalleryAlbums(processedAlbums);
         } else {
           console.warn('No gallery albums found from Sanity, using fallback content');
           setGalleryAlbums(FALLBACK_ALBUMS);
@@ -368,7 +396,7 @@ const TheClub: React.FC = () => {
       } catch (error) {
         console.error('Error in gallery albums fetch:', error);
         setError(error instanceof Error ? error.message : 'Unknown error fetching albums');
-        setGalleryAlbums([]);
+        setGalleryAlbums(FALLBACK_ALBUMS);
       } finally {
         setLoading(false);
       }
@@ -396,144 +424,69 @@ const TheClub: React.FC = () => {
   // Gallery section with improved album cards
   const renderGallerySection = () => {
     return (
-      <section className="py-16 md:py-20 bg-white">
+      <section className="py-16 md:py-20 bg-background-light">
         <div className="container-custom">
           <div className="text-center mb-12">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              <h2 className="text-3xl md:text-4xl font-bold text-primary mb-4">Club Photo Galleries</h2>
-              <p className="text-lg max-w-3xl mx-auto mb-6">
-                Browse through collections of photos from our club activities, tournaments, and social events
+            <h2 className="text-3xl md:text-4xl font-bold text-primary mb-4">Club Photo Galleries</h2>
+            <p className="text-lg max-w-3xl mx-auto mb-6">
+              Browse through collections of photos from our club activities, tournaments, and social events
+            </p>
+            {error ? (
+              <p className="text-red-500 mt-4 bg-red-50 p-3 rounded inline-block">
+                {error} {connectionStatus === 'failed' && ' - Check console for details'}
               </p>
-              {error ? (
-                <p className="text-red-500 mt-4 bg-red-50 p-3 rounded inline-block">
-                  {error} {connectionStatus === 'failed' && ' - Check console for details'}
-                </p>
-              ) : (
-                <p className="text-sm text-gray-500 mb-8">Click on any album to view its photos in a slideshow</p>
-              )}
-            </motion.div>
+            ) : (
+              <p className="text-sm text-gray-500 mb-8">Click on any album to view its photos in a slideshow</p>
+            )}
           </div>
 
           {loading ? (
-            // Show improved loading skeleton with pulse animation
-            <motion.div 
-              initial={{ opacity: 0.5 }}
-              animate={{ opacity: 1 }}
-              className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10 mb-12 max-w-screen-xl mx-auto"
-            >
-              {[...Array(4)].map((_, index) => (
-                <div 
-                  key={index} 
-                  className="relative rounded-xl bg-gray-200 overflow-hidden shadow-md h-full flex flex-col"
-                  style={{ height: "400px" }}
-                >
-                  <div className="h-64 md:h-72 animate-pulse"></div>
-                  <div className="p-6 flex-grow flex flex-col">
-                    <div className="h-6 bg-gray-300 rounded animate-pulse mb-3 w-3/4"></div>
-                    <div className="h-4 bg-gray-300 rounded animate-pulse mb-2 w-full"></div>
-                    <div className="h-4 bg-gray-300 rounded animate-pulse w-2/3"></div>
-                    <div className="flex justify-end mt-auto pt-3">
-                      <div className="h-8 bg-gray-300 rounded animate-pulse w-32"></div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </motion.div>
-          ) : galleryAlbums.length > 0 ? (
-            // Show gallery albums with enhanced styling and coverflow effect
-            <motion.div
-              initial="hidden"
-              animate="visible"
-              variants={{
-                hidden: { opacity: 0 },
-                visible: {
-                  opacity: 1,
-                  transition: {
-                    staggerChildren: 0.2
-                  }
-                }
-              }}
-              className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10 mb-12 max-w-screen-xl mx-auto"
-            >
-              {galleryAlbums.map((album, index) => (
-                <motion.div
+            <div className="flex justify-center items-center p-12">
+              <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+              {galleryAlbums.map((album) => (
+                <div
                   key={album._id}
-                  variants={{
-                    hidden: { opacity: 0, y: 50 },
-                    visible: { 
-                      opacity: 1, 
-                      y: 0,
-                      transition: {
-                        type: "spring",
-                        stiffness: 100,
-                        damping: 12
-                      }
-                    }
-                  }}
-                  whileHover={{ 
-                    y: -8, 
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-                    rotateY: index % 2 === 0 ? 5 : -5, // Alternate rotation direction
-                    z: 20
-                  }}
-                  className="group bg-white rounded-xl overflow-hidden shadow-lg border border-gray-200 cursor-pointer transition-all duration-500 transform-gpu perspective-1000 h-full flex flex-col"
+                  className="bg-white rounded-xl overflow-hidden shadow-md border border-gray-200 cursor-pointer hover:shadow-lg transition-all duration-300"
                   onClick={() => openSlideshow(album)}
                 >
-                  <div className="h-64 md:h-72 overflow-hidden relative">
+                  <div className="h-64 overflow-hidden relative">
                     {(album.coverImageUrl || (album.coverImage && album.coverImage.asset)) ? (
                       <img 
                         src={album.coverImageUrl || urlFor(album.coverImage).width(800).url()} 
                         alt={album.title} 
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        className="w-full h-full object-cover"
                       />
-                    ) : album.photos && album.photos.length > 0 && album.photos[0].imageUrl ? (
-                      // Fallback to first photo if no cover image
+                    ) : album.photos && album.photos.length > 0 && (album.photos[0].imageUrl || album.photos[0].image) ? (
                       <img 
                         src={album.photos[0].imageUrl || urlFor(album.photos[0].image).width(800).url()} 
                         alt={album.title} 
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        className="w-full h-full object-cover"
                       />
                     ) : (
                       <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                         <span className="text-gray-400">No cover image</span>
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     <div className="absolute top-3 right-3 bg-primary text-white px-3 py-1 rounded-full text-xs font-semibold shadow-md">
                       {album.photos?.length || 0} photos
                     </div>
                   </div>
-                  <div className="p-6 relative z-10 flex-grow flex flex-col">
-                    <h3 className="text-xl font-bold text-primary mb-2 group-hover:text-primary-light transition-colors duration-300">{album.title}</h3>
+                  <div className="p-6">
+                    <h3 className="text-xl font-bold text-primary mb-2">{album.title}</h3>
                     {album.description && (
-                      <p className="text-gray-600 mb-4 line-clamp-2 flex-grow">{album.description}</p>
+                      <p className="text-gray-600 mb-4">{album.description}</p>
                     )}
-                    <div className="flex justify-end mt-auto pt-3">
-                      <button className="btn btn-sm btn-primary inline-flex items-center gap-2 group-hover:bg-primary-light transition-colors duration-300">
+                    <div className="flex justify-end">
+                      <button className="btn btn-sm btn-primary">
                         View Gallery
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 transition-transform duration-300 transform group-hover:translate-x-1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M5 12h14"></path>
-                          <path d="m12 5 7 7-7 7"></path>
-                        </svg>
                       </button>
                     </div>
                   </div>
-                </motion.div>
+                </div>
               ))}
-            </motion.div>
-          ) : (
-            // This section shouldn't be reached since we have fallback albums
-            <div className="text-center p-10 bg-gray-50 rounded-lg">
-              <p className="text-lg text-gray-600 mb-4">
-                No photo galleries are available at this time. Please check back soon!
-              </p>
-              <Link to="/" className="btn btn-primary">
-                Return Home
-              </Link>
             </div>
           )}
 
