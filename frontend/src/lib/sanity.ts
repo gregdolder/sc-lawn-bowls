@@ -1,6 +1,14 @@
 import { createClient } from '@sanity/client';
 import imageUrlBuilder from '@sanity/image-url';
 
+// Log environment variables (without token)
+console.log('Sanity configuration:', {
+  projectId: import.meta.env.VITE_SANITY_PROJECT_ID,
+  dataset: import.meta.env.VITE_SANITY_DATASET,
+  tokenExists: !!import.meta.env.VITE_SANITY_TOKEN,
+  apiVersion: '2023-05-03'
+});
+
 export const sanityClient = createClient({
   projectId: import.meta.env.VITE_SANITY_PROJECT_ID,
   dataset: import.meta.env.VITE_SANITY_DATASET,
@@ -18,89 +26,129 @@ export function urlFor(source: any) {
 
 // Helper function to fetch events
 export async function getEvents() {
-  return sanityClient.fetch(`
-    *[_type == "event"] | order(startDate asc) {
-      _id,
-      title,
-      slug,
-      eventType,
-      startDate,
-      endDate,
-      location,
-      description,
-      image,
-      isFeatured,
-      registrationUrl,
-      registrationRequired
-    }
-  `);
+  try {
+    console.log('Fetching events from Sanity...');
+    const events = await sanityClient.fetch(`
+      *[_type == "event"] | order(startDate asc) {
+        _id,
+        title,
+        slug,
+        eventType,
+        startDate,
+        endDate,
+        location,
+        description,
+        image,
+        isFeatured,
+        registrationUrl,
+        registrationRequired
+      }
+    `);
+    console.log(`Found ${events?.length || 0} events`);
+    return events;
+  } catch (error) {
+    console.error('Error fetching events:', error);
+    return [];
+  }
 }
 
 // Helper function to fetch featured events
 export async function getFeaturedEvents() {
-  return sanityClient.fetch(`
-    *[_type == "event" && isFeatured == true] | order(startDate asc) {
-      _id,
-      title,
-      slug,
-      eventType,
-      startDate,
-      endDate,
-      location,
-      description,
-      image,
-      registrationUrl,
-      registrationRequired
-    }
-  `);
+  try {
+    console.log('Fetching featured events from Sanity...');
+    const events = await sanityClient.fetch(`
+      *[_type == "event" && isFeatured == true] | order(startDate asc) {
+        _id,
+        title,
+        slug,
+        eventType,
+        startDate,
+        endDate,
+        location,
+        description,
+        image,
+        registrationUrl,
+        registrationRequired
+      }
+    `);
+    console.log(`Found ${events?.length || 0} featured events`);
+    return events;
+  } catch (error) {
+    console.error('Error fetching featured events:', error);
+    return [];
+  }
 }
 
 // Helper function to fetch blog posts
 export async function getPosts() {
-  return sanityClient.fetch(`
-    *[_type == "post"] | order(publishedAt desc) {
-      _id,
-      title,
-      slug,
-      author,
-      mainImage,
-      categories[]->{
+  try {
+    console.log('Fetching posts from Sanity...');
+    const posts = await sanityClient.fetch(`
+      *[_type == "post"] | order(publishedAt desc) {
         _id,
-        title
-      },
-      publishedAt,
-      excerpt,
-      content
-    }
-  `);
+        title,
+        slug,
+        author,
+        mainImage,
+        categories[]->{
+          _id,
+          title
+        },
+        publishedAt,
+        excerpt,
+        content
+      }
+    `);
+    console.log(`Found ${posts?.length || 0} posts`);
+    return posts;
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    return [];
+  }
 }
 
 // Helper function to fetch gallery albums
 export async function getGalleryAlbums() {
-  return sanityClient.fetch(`
-    *[_type == "galleryAlbum"] | order(date desc) {
-      _id,
-      title,
-      slug,
-      description,
-      date,
-      coverImage,
-      "photoCount": count(photos)
-    }
-  `);
+  try {
+    console.log('Fetching gallery albums from Sanity...');
+    const albums = await sanityClient.fetch(`
+      *[_type == "galleryAlbum"] | order(date desc) {
+        _id,
+        title,
+        slug,
+        description,
+        date,
+        coverImage,
+        "photoCount": count(photos)
+      }
+    `);
+    console.log(`Found ${albums?.length || 0} gallery albums`);
+    return albums;
+  } catch (error) {
+    console.error('Error fetching gallery albums:', error);
+    return [];
+  }
 }
 
 // Helper function to fetch photos from an album
 export async function getGalleryPhotos(albumId: string) {
-  return sanityClient.fetch(`
-    *[_type == "galleryAlbum" && _id == $albumId][0] {
-      photos[] {
-        _key,
-        image,
-        caption
+  try {
+    console.log(`Fetching photos for album ${albumId} from Sanity...`);
+    const album = await sanityClient.fetch(`
+      *[_type == "galleryAlbum" && _id == $albumId][0] {
+        photos[] {
+          _key,
+          image,
+          caption
+        }
       }
-    }
-  `, { albumId });
+    `, { albumId });
+    console.log(`Found ${album?.photos?.length || 0} photos for album ${albumId}`);
+    return album?.photos || [];
+  } catch (error) {
+    console.error('Error fetching gallery photos:', error);
+    return [];
+  }
 }
 
 // Define types for Sanity gallery photo
@@ -155,7 +203,7 @@ export async function getGalleryAlbumsWithPhotos(): Promise<SanityGalleryAlbum[]
       return [];
     }
     
-    console.log("Fetching gallery albums and photos...");
+    console.log('Fetching gallery albums with photos from Sanity...');
 
     // First get all albums
     const basicAlbumsQuery = `*[_type == "galleryAlbum"] | order(publishedAt desc) {
@@ -239,6 +287,7 @@ export async function getGalleryAlbumsWithPhotos(): Promise<SanityGalleryAlbum[]
       };
     });
     
+    console.log(`Found ${processedAlbums?.length || 0} albums with photos`);
     console.log('Final processed albums:', processedAlbums);
     return processedAlbums;
   } catch (error) {
